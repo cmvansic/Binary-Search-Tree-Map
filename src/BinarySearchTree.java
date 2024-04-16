@@ -33,10 +33,68 @@ public class BinarySearchTree<K extends Comparable<K>, V> extends AbstractBinary
     *                                       (<a href="{@docRoot}/java/util/Collection.html#optional-restrictions">optional</a>)
     */
    @Override
-   public V remove ( Object key ) {
-      // YOUR CODE HERE
-      return null; // Key not found in tree.
+   public V remove(Object key) {
+      Node parent = null;
+      Node current = getRoot();
+      while (current != null && !current.getKey().equals(key)) {
+         parent = current;
+         if (((Comparable) key).compareTo(current.getKey()) < 0) {
+            current = current.getLeftChild();
+         } else {
+            current = current.getRightChild();
+         }
+      }
+
+      if (current == null) {
+         return null; // Key not found
+      }
+
+      V oldValue = current.getValue();
+
+      if (current.getLeftChild() == null && current.getRightChild() == null) {
+         // Case 1: Node with no children
+         if (parent == null) {
+            setRoot(null);
+         } else if (parent.getLeftChild() == current) {
+            parent.setLeftChild(null);
+         } else {
+            parent.setRightChild(null);
+         }
+      } else if (current.getLeftChild() == null || current.getRightChild() == null) {
+         // Case 2: Node with one child
+         Node child = (current.getLeftChild() != null) ? current.getLeftChild() : current.getRightChild();
+         if (parent == null) {
+            setRoot(child);
+         } else if (parent.getLeftChild() == current) {
+            parent.setLeftChild(child);
+         } else {
+            parent.setRightChild(child);
+         }
+      } else {
+         // Case 3: Node with two children
+         Node successor = findMin(current.getRightChild());
+         remove(successor.getKey()); // Remove successor from its current location
+         successor.setLeftChild(current.getLeftChild());
+         successor.setRightChild(current.getRightChild());
+         if (parent == null) {
+            setRoot(successor);
+         } else if (parent.getLeftChild() == current) {
+            parent.setLeftChild(successor);
+         } else {
+            parent.setRightChild(successor);
+         }
+      }
+
+      return oldValue;
    }
+
+   private Node findMin(Node node) {
+      while (node.getLeftChild() != null) {
+         node = node.getLeftChild();
+      }
+      return node;
+   }
+
 
    /**
     * Recursive Algorithm: Postorder Binary Tree Traversal
@@ -59,7 +117,15 @@ public class BinarySearchTree<K extends Comparable<K>, V> extends AbstractBinary
     */
    @Override
    public void traversePostorder( Visitor visitor ) {
-      // YOUR CODE HERE
+      traversePostorder(getRoot(), visitor);
+   }
+
+   private void traversePostorder(Node node, Visitor visitor) {
+      if (node != null) {
+         traversePostorder(node.getLeftChild(), visitor);   // Visit left subtree
+         traversePostorder(node.getRightChild(), visitor);  // Visit right subtree
+         visitor.visit(node.getKey(), node.getValue());      // Visit the node itself
+      }
    }
 
    /**
@@ -84,7 +150,24 @@ public class BinarySearchTree<K extends Comparable<K>, V> extends AbstractBinary
     */
    @Override
    public void traverseLevelorder( Visitor visitor ) {
-      // YOUR CODE HERE
-   }
+      if (getRoot() == null) {
+         return; // If the tree is empty, do nothing
+      }
 
+      Queue<Node> queue = new LinkedList<>(); // Create a queue to hold the nodes
+      queue.add(getRoot()); // Start with the root
+
+      while (!queue.isEmpty()) {
+         Node current = queue.remove(); // Remove the head of the queue
+
+         visitor.visit(current.getKey(), current.getValue()); // Visit the current node
+
+         if (current.getLeftChild() != null) {
+            queue.add(current.getLeftChild()); // Add the left child to the queue if it exists
+         }
+         if (current.getRightChild() != null) {
+            queue.add(current.getRightChild()); // Add the right child to the queue if it exists
+         }
+      }
+   }
  }
